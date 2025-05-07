@@ -1,59 +1,72 @@
+import 'package:flutter/material.dart';
 import 'package:datahex_login_task/model/user_model.dart';
 import 'package:datahex_login_task/service/user_service.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 
-class AuthController with ChangeNotifier {
-  final UserService _apiService = UserService();
+class LoginProvider extends ChangeNotifier {
+  final AuthService _authService = AuthService();
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
+  bool _isVisible = true;
   bool _isLoading = false;
-  String _errorMessage = '';
-  UserModel? _user;
+  String? _errorMessage;
+  UserModel? _loginResponse;
 
+  // Getters
+  bool get isVisible => _isVisible;
   bool get isLoading => _isLoading;
-  String get errorMessage => _errorMessage;
-  UserModel? get user => _user;
+  String? get errorMessage => _errorMessage;
+  UserModel? get loginResponse => _loginResponse;
 
-  Future<bool> login(String email, String password) async {
+  // Toggle password visibility
+  void togglePasswordVisibility() {
+    _isVisible = !_isVisible;
+    notifyListeners();
+  }
+
+  // Reset error message
+  void resetError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // Clear form fields
+  void clearForm() {
+    usernameController.clear();
+    passwordController.clear();
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // Perform login
+  Future<bool> login() async {
     _isLoading = true;
-    _errorMessage = '';
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await _apiService.login(email, password);
-
-      _user = UserModel(
-        email: email,
-        token: response.data['token'],
+      final response = await _authService.login(
+        usernameController.text.trim(),
+        passwordController.text.trim(),
       );
 
+      _loginResponse = response;
       _isLoading = false;
       notifyListeners();
-      return true;
-    } on DioException catch (e) {
-      _isLoading = false;
 
-      if (e.response != null) {
-        // Handle API errors
-        _errorMessage =
-            e.response?.data['detail'] ?? 'Login failed. Please try again.';
-      } else {
-        // Handle connection errors
-        _errorMessage = 'Network error. Please check your connection.';
-      }
-
-      notifyListeners();
-      return false;
+      return _loginResponse != null;
     } catch (e) {
+      _errorMessage = 'Login failed: ${e.toString()}';
       _isLoading = false;
-      _errorMessage = 'An unexpected error occurred. Please try again.';
       notifyListeners();
       return false;
     }
   }
 
-  void clearError() {
-    _errorMessage = '';
-    notifyListeners();
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 }

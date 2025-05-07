@@ -1,39 +1,49 @@
+import 'package:datahex_login_task/model/user_model.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:developer';
 
-class UserService {
+class AuthService {
   final Dio _dio = Dio();
-  final String _baseUrl = 'https://entrance-test-api.datahex.co/api/v1';
+  final String _baseUrl =
+      'https://entrance-test-api.datahex.co/api/v1/auth/login/';
 
-  UserService() {
-    _dio.options.baseUrl = _baseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 5);
-    _dio.options.receiveTimeout = const Duration(seconds: 3);
-    _dio.options.headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    // Add interceptors for logging if needed
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-      ));
-    }
-  }
-
-  Future<Response> login(String email, String password) async {
+  Future<UserModel> login(String email, String password) async {
     try {
       final response = await _dio.post(
-        '/auth/login/',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        _baseUrl,
+        data: {'email': email, 'password': password},
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
-      return response;
+
+      log('Response Status Code: ${response.statusCode}');
+      log('Response Data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return UserModel.fromJson(response.data);
+      } else {
+        log('Login failed with status code: ${response.statusCode}');
+        log('Login failed with status message: ${response.statusMessage}');
+        throw Exception('Login failed: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      // Changed from catch (e) to on DioException catch (e)
+      // Handle Dio specific errors
+      log('Dio Error: ${e.message}');
+      log('Dio Error Type: ${e.type}');
+      log('Dio Error Response: ${e.response?.data}');
+      log('Dio Error Stacktrace: ${e.stackTrace}');
+
+      if (e.type == DioExceptionType.connectionError) {
+        // Handle connection errors specifically
+        throw Exception(
+          'Failed to connect to the server. Please check your internet connection.',
+        );
+      } else {
+        throw Exception('Dio error during login: ${e.message}');
+      }
     } catch (e) {
+      // Handle other types of errors
+      log('Error: ${e.toString()}');
       rethrow;
     }
   }
