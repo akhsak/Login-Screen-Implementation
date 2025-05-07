@@ -1,72 +1,50 @@
-import 'package:flutter/material.dart';
 import 'package:datahex_login_task/model/user_model.dart';
 import 'package:datahex_login_task/service/user_service.dart';
+import 'package:flutter/material.dart';
 
 class LoginProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool isLoading = false;
+  bool isVisible = true;
+  String? errorMessage;
+  UserModel? userModel; // Added to store the user model
 
-  bool _isVisible = true;
-  bool _isLoading = false;
-  String? _errorMessage;
-  UserModel? _loginResponse;
-
-  // Getters
-  bool get isVisible => _isVisible;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
-  UserModel? get loginResponse => _loginResponse;
-
-  // Toggle password visibility
   void togglePasswordVisibility() {
-    _isVisible = !_isVisible;
+    isVisible = !isVisible;
     notifyListeners();
   }
 
-  // Reset error message
-  void resetError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-
-  // Clear form fields
-  void clearForm() {
-    usernameController.clear();
-    passwordController.clear();
-    _errorMessage = null;
-    notifyListeners();
-  }
-
-  // Perform login
   Future<bool> login() async {
-    _isLoading = true;
-    _errorMessage = null;
+    errorMessage = null;
+    isLoading = true;
     notifyListeners();
 
     try {
-      final response = await _authService.login(
-        usernameController.text.trim(),
-        passwordController.text.trim(),
+      final authService = AuthService();
+      final response = await authService.login(
+        usernameController.text,
+        passwordController.text,
       );
 
-      _loginResponse = response;
-      _isLoading = false;
-      notifyListeners();
+      // Store the user model
+      userModel = response;
 
-      return _loginResponse != null;
+      isLoading = false;
+      notifyListeners();
+      return response.success;
     } catch (e) {
-      _errorMessage = 'Login failed: ${e.toString()}';
-      _isLoading = false;
+      isLoading = false;
+      errorMessage = e.toString();
       notifyListeners();
       return false;
     }
   }
 
-  @override
-  void dispose() {
-    usernameController.dispose();
-    passwordController.dispose();
-    super.dispose();
+  void clearForm() {
+    usernameController.clear();
+    passwordController.clear();
+    errorMessage = null;
+    notifyListeners();
   }
 }

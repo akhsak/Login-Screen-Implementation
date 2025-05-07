@@ -154,12 +154,18 @@ class _LoginPageState extends State<LoginPage> {
                                                             await loginProvider
                                                                 .login();
                                                         if (success) {
-                                                          if (mounted)
+                                                          if (mounted) {
+                                                            // Get userDisplayName from the stored model
+                                                            final userDisplayName =
+                                                                loginProvider
+                                                                        .userModel
+                                                                        ?.user
+                                                                        .userDisplayName ??
+                                                                    "User";
                                                             showSuccessDialog(
                                                                 context,
-                                                                loginProvider
-                                                                    .usernameController
-                                                                    .text);
+                                                                userDisplayName);
+                                                          }
                                                         } else {
                                                           if (mounted)
                                                             showErrorDialog(

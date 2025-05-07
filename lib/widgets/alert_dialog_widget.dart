@@ -2,7 +2,7 @@ import 'package:datahex_login_task/controller/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void showSuccessDialog(BuildContext context, String username) {
+void showSuccessDialog(BuildContext context, String userDisplayName) {
   // Get screen size
   final screenSize = MediaQuery.of(context).size;
   final isSmallScreen = screenSize.width < 360;
@@ -39,7 +39,7 @@ void showSuccessDialog(BuildContext context, String username) {
             ),
             SizedBox(height: isSmallScreen ? 6.0 : 8.0),
             Text(
-              'Welcome $username',
+              'Welcome $userDisplayName',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: isSmallScreen ? 14 : 16,
